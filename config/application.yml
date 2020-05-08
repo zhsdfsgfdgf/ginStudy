@@ -1,0 +1,10 @@
+server:
+    port: 8082
+datasource:
+    driverName: mysql
+    host: 47.105.83.40
+    port: 3306
+    database: ginStudy
+    username: root
+    password: zhaoheng
+    charset: utf8
