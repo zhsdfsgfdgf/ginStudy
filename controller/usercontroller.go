@@ -18,11 +18,11 @@ func Register(ctx *gin.Context) {
 	password := ctx.PostForm("password")
 	//数据验证
 	if len(telephone) != 11 {
-		ctx.JSON(422, gin.H{"code": 422, "msg": "手机号必须位为11位"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"code": 422, "msg": "手机号必须位为11位"})
 		return
 	}
 	if len(password) < 6 {
-		ctx.JSON(422, gin.H{"code": 422, "msg": "密码不得少于6位"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"code": 422, "msg": "密码不得少于6位"})
 		return
 	}
 	if len(name) == 0 {
@@ -30,7 +30,7 @@ func Register(ctx *gin.Context) {
 	}
 	//数据库判断
 	if isTelephoneExist(db, telephone) {
-		ctx.JSON(422, gin.H{"code": 422, "msg": "用户已经存在"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"code": 422, "msg": "用户已经存在"})
 		return
 	}
 	//创建用户
@@ -44,7 +44,7 @@ func Register(ctx *gin.Context) {
 		Telephone: telephone,
 	}
 	db.Create(&newUser)
-	ctx.JSON(422, gin.H{"code": 200, "msg": "注册成功"})
+	ctx.JSON(http.StatusBadRequest, gin.H{"code": 200, "msg": "注册成功"})
 }
 
 func Login(ctx *gin.Context) {
@@ -54,26 +54,37 @@ func Login(ctx *gin.Context) {
 	password := ctx.PostForm("password")
 	//数据验证
 	if len(telephone) != 11 {
-		ctx.JSON(422, gin.H{"code": 422, "msg": "手机号必须位为11位"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"code": 422, "msg": "手机号必须位为11位"})
 		return
 	}
 	if len(password) < 6 {
-		ctx.JSON(422, gin.H{"code": 422, "msg": "密码不得少于6位"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"code": 422, "msg": "密码不得少于6位"})
 		return
 	}
 	//数据库判断
 	var user model.User
 	db.Where("telephone=?", telephone).First(&user)
 	if user.ID == 0 {
-		ctx.JSON(422, gin.H{"code": 422, "msg": "该用户不存在"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"code": 422, "msg": "该用户不存在"})
 		return
 	}
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
-		ctx.JSON(422, gin.H{"code": 400, "msg": "密码错误"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"code": 400, "msg": "密码错误"})
 		return
 	}
-	token := "11"
-	ctx.JSON(422, gin.H{"code": 200, "data": gin.H{"token": token}, "msg": "登录成功"})
+	//发放token
+	token, err := common.ReleaseToken(user)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"code": 500, "msg": "系统异常"})
+		return
+	}
+	ctx.JSON(200, gin.H{"code": 200, "data": gin.H{"token": token}, "msg": "登录成功"})
+
+}
+
+func Info(ctx *gin.Context) {
+	user, _ := ctx.Get("user")
+	ctx.JSON(200, gin.H{"code": 200, "data": gin.H{"user": user}})
 
 }
 
