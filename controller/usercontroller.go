@@ -2,6 +2,7 @@ package controller
 
 import (
 	"ginStudy/common"
+	"ginStudy/dto"
 	model "ginStudy/models"
 	"net/http"
 
@@ -84,7 +85,7 @@ func Login(ctx *gin.Context) {
 
 func Info(ctx *gin.Context) {
 	user, _ := ctx.Get("user")
-	ctx.JSON(200, gin.H{"code": 200, "data": gin.H{"user": user}})
+	ctx.JSON(200, gin.H{"code": 200, "data": gin.H{"user": dto.ToUserDto(user.(model.User))}})
 
 }
 
